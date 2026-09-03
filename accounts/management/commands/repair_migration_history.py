@@ -1,9 +1,7 @@
 """
-Safely repairs the specific migration-history mismatch caused when
-accounts.0001_initial is missing from django_migrations while
-admin.0001_initial is already recorded as applied.
+Safely repairs an inconsistent accounts/admin migration history.
 
-This command is intentionally narrow and idempotent. It never deletes
+This command changes only django_migrations records. It never deletes
 application data and never resets the database.
 """
 from django.core.management import BaseCommand, call_command
@@ -18,57 +16,91 @@ class Command(BaseCommand):
         recorder = MigrationRecorder(connection)
         applied = recorder.applied_migrations()
 
-        admin_applied = ("admin", "0001_initial") in applied
         accounts_applied = ("accounts", "0001_initial") in applied
+        admin_chain_inconsistent = (
+            ("admin", "0001_initial") not in applied
+            and any(app_label == "admin" for app_label, _ in applied)
+        )
 
-        if not (admin_applied and not accounts_applied):
+        with connection.cursor() as cursor:
+            tables = set(connection.introspection.table_names(cursor))
+
+        if accounts_applied and admin_chain_inconsistent:
+            if "django_admin_log" in tables:
+                recorder.record_applied("admin", "0001_initial")
+                self.stdout.write(
+                    self.style.SUCCESS(
+                        "Repaired migration history: recorded admin.0001_initial "
+                        "because django_admin_log already exists."
+                    )
+                )
+                return
+
+            self.stdout.write(
+                self.style.WARNING(
+                    "admin migration records are inconsistent and django_admin_log "
+                    "does not exist; rebuilding the admin migration chain."
+                )
+            )
+            for app_label, migration_name in applied:
+                if app_label == "admin":
+                    recorder.record_unapplied(app_label, migration_name)
+            call_command("migrate", "admin", interactive=False, verbosity=1)
+            return
+
+        if accounts_applied:
             self.stdout.write(
                 self.style.SUCCESS("Migration history is already consistent; no repair needed.")
             )
             return
 
-        # If the custom User table already exists, the schema is already
-        # present and only the migration record is missing.
-        with connection.cursor() as cursor:
-            tables = set(connection.introspection.table_names(cursor))
-
         if "accounts_user" in tables:
             recorder.record_applied("accounts", "0001_initial")
+            if "django_admin_log" in tables and ("admin", "0001_initial") not in applied:
+                recorder.record_applied("admin", "0001_initial")
             self.stdout.write(
                 self.style.SUCCESS(
-                    "Repaired migration history: recorded accounts.0001_initial "
-                    "because accounts_user already exists."
+                    "Repaired migration history using the existing accounts/admin schemas."
                 )
             )
             return
 
-        # The accounts table does not exist. Temporarily remove only the
-        # admin migration record so Django can apply accounts.0001_initial,
-        # then restore the admin migration record without re-running its
-        # schema-creating operations.
         self.stdout.write(
             self.style.WARNING(
                 "accounts.0001_initial is missing and accounts_user does not exist. "
-                "Temporarily adjusting only the migration record so the accounts "
-                "migration can be applied."
+                "Temporarily adjusting the applied admin migration chain so the "
+                "accounts migration can be applied."
             )
         )
 
-        recorder.record_unapplied("admin", "0001_initial")
+        applied_admin_migrations = sorted(
+            migration_name
+            for app_label, migration_name in applied
+            if app_label == "admin"
+        )
+        for migration_name in applied_admin_migrations:
+            recorder.record_unapplied("admin", migration_name)
+
         try:
             call_command("migrate", "accounts", "0001", interactive=False, verbosity=1)
         except Exception:
-            # Restore the original migration-history entry if the migration
-            # itself fails. Do not silently hide the real migration error.
-            if ("admin", "0001_initial") not in recorder.applied_migrations():
-                recorder.record_applied("admin", "0001_initial")
+            for migration_name in applied_admin_migrations:
+                if ("admin", migration_name) not in recorder.applied_migrations():
+                    recorder.record_applied("admin", migration_name)
             raise
         else:
-            if ("admin", "0001_initial") not in recorder.applied_migrations():
-                recorder.record_applied("admin", "0001_initial")
+            if "django_admin_log" in tables and "0001_initial" not in applied_admin_migrations:
+                applied_admin_migrations.insert(0, "0001_initial")
+
+            if "django_admin_log" not in tables:
+                call_command("migrate", "admin", interactive=False, verbosity=1)
+            else:
+                for migration_name in applied_admin_migrations:
+                    if ("admin", migration_name) not in recorder.applied_migrations():
+                        recorder.record_applied("admin", migration_name)
 
             self.stdout.write(
                 self.style.SUCCESS(
-                    "Repaired migration history and applied accounts.0001_initial."
+                    "Repaired migration history and applied accounts/admin migrations."
                 )
             )
