@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Adjust Stock{% endblock %}
+{% block content %}
+<h1 class="text-xl font-bold mb-4">Add / Adjust Stock</h1>
+<div class="card p-6 max-w-lg">
+<form method="post" class="space-y-4">
+  {% csrf_token %}
+  <div><label class="block text-sm font-medium mb-1">Product</label>{{ form.product }}</div>
+  <div><label class="block text-sm font-medium mb-1">Movement Type</label>{{ form.movement_type }}</div>
+  <div><label class="block text-sm font-medium mb-1">Quantity</label>{{ form.quantity }}<p class="text-xs text-slate-500 mt-1">{{ form.quantity.help_text }}</p></div>
+  <div><label class="block text-sm font-medium mb-1">Reason</label>{{ form.reason }}</div>
+  <div class="flex gap-2 pt-2">
+    <button type="submit" class="btn btn-primary">Save</button>
+    <a href="{% url 'inventory:overview' %}" class="btn btn-outline">Cancel</a>
+  </div>
+</form>
+</div>
+{% endblock %}

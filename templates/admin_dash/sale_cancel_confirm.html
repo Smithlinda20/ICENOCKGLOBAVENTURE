@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Cancel Sale{% endblock %}
+{% block content %}
+<div class="card p-6 max-w-lg">
+<h1 class="text-lg font-bold mb-2">Cancel Sale {{ sale.receipt_number }}?</h1>
+<p class="text-sm text-slate-600 mb-4">This will restore {{ sale.items.count }} item(s) to stock and mark the sale as cancelled. This cannot be undone.</p>
+<form method="post" class="space-y-3">
+  {% csrf_token %}
+  <label class="block text-sm font-medium">Reason</label>
+  <input type="text" name="reason" class="input" required>
+  <div class="flex gap-2 pt-2">
+    <button type="submit" class="btn btn-danger">Confirm Cancel</button>
+    <a href="{% url 'sales:all_sales' %}" class="btn btn-outline">Back</a>
+  </div>
+</form>
+</div>
+{% endblock %}

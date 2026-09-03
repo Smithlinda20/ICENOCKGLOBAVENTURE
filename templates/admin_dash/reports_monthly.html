@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Monthly Sales Analysis{% endblock %}
+{% block content %}
+<div class="flex justify-between items-center mb-4 flex-wrap gap-2">
+  <h1 class="text-xl font-bold">Monthly Sales Analysis</h1>
+  <div class="flex gap-2">
+    <a href="{% url 'reports:performance' %}?date_from={{ date_from }}&date_to={{ date_to }}" class="btn btn-outline">Salesperson Performance</a>
+    <a href="{% url 'reports:export_sales_csv' %}?date_from={{ date_from }}&date_to={{ date_to }}" class="btn btn-secondary">Export CSV</a>
+  </div>
+</div>
+<form method="get" class="card p-4 mb-6 flex flex-wrap gap-3 items-end text-sm">
+  <div><label class="block text-xs text-slate-500 mb-1">From</label><input type="date" name="date_from" value="{{ date_from|date:'Y-m-d' }}" class="input"></div>
+  <div><label class="block text-xs text-slate-500 mb-1">To</label><input type="date" name="date_to" value="{{ date_to|date:'Y-m-d' }}" class="input"></div>
+  <button class="btn btn-primary">Apply</button>
+</form>
+
+<div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+  <div class="card p-4"><div class="text-xs text-slate-500">Transactions</div><div class="text-2xl font-extrabold">{{ sales_agg.transactions|default:0 }}</div></div>
+  <div class="card p-4"><div class="text-xs text-slate-500">Quantity Sold</div><div class="text-2xl font-extrabold">{{ qty_sold }}</div></div>
+  <div class="card p-4"><div class="text-xs text-slate-500">Gross Sales</div><div class="text-2xl font-extrabold">₦{{ sales_agg.gross|default:0|floatformat:2 }}</div></div>
+  <div class="card p-4"><div class="text-xs text-slate-500">Net Sales</div><div class="text-2xl font-extrabold">₦{{ sales_agg.net|default:0|floatformat:2 }}</div></div>
+</div>
+<div class="grid sm:grid-cols-3 gap-4 mb-6 text-sm">
+  <div class="card p-4"><div class="text-xs text-slate-500">Total Discounts</div><div class="font-bold text-lg">₦{{ sales_agg.discounts|default:0|floatformat:2 }}</div></div>
+  <div class="card p-4"><div class="text-xs text-slate-500">Avg. Transaction</div><div class="font-bold text-lg">₦{{ avg_transaction|floatformat:2 }}</div></div>
+  <div class="card p-4"><div class="text-xs text-slate-500">Current Total Stock</div><div class="font-bold text-lg">{{ current_stock_total }}</div></div>
+</div>
+
+<div class="grid lg:grid-cols-2 gap-6">
+  <div class="card p-4">
+    <h2 class="font-bold text-sm mb-3">Top Products</h2>
+    <table class="styled-table"><thead><tr><th>Product</th><th>Qty</th><th>Net Sales</th></tr></thead>
+    <tbody>{% for row in by_product %}<tr><td>{{ row.product__name }}</td><td>{{ row.qty }}</td><td>₦{{ row.net|floatformat:2 }}</td></tr>
+    {% empty %}<tr><td colspan="3" class="text-center text-slate-400 py-4">No data.</td></tr>{% endfor %}</tbody></table>
+  </div>
+  <div class="card p-4">
+    <h2 class="font-bold text-sm mb-3">Sales by Salesperson</h2>
+    <table class="styled-table"><thead><tr><th>Rep</th><th>Transactions</th><th>Net</th></tr></thead>
+    <tbody>{% for row in by_salesperson %}<tr><td>{{ row.salesperson__username }}</td><td>{{ row.transactions }}</td><td>₦{{ row.net|floatformat:2 }}</td></tr>
+    {% empty %}<tr><td colspan="3" class="text-center text-slate-400 py-4">No data.</td></tr>{% endfor %}</tbody></table>
+  </div>
+  <div class="card p-4">
+    <h2 class="font-bold text-sm mb-3">Sales by PACK / CARTON</h2>
+    <table class="styled-table"><thead><tr><th>Unit</th><th>Qty</th><th>Net</th></tr></thead>
+    <tbody>{% for row in by_unit %}<tr><td>{{ row.unit_type }}</td><td>{{ row.qty }}</td><td>₦{{ row.net|floatformat:2 }}</td></tr>
+    {% empty %}<tr><td colspan="3" class="text-center text-slate-400 py-4">No data.</td></tr>{% endfor %}</tbody></table>
+  </div>
+  <div class="card p-4">
+    <h2 class="font-bold text-sm mb-3">Payment Method Totals</h2>
+    <table class="styled-table"><thead><tr><th>Method</th><th>Count</th><th>Total</th></tr></thead>
+    <tbody>{% for row in by_payment %}<tr><td>{{ row.payment_method }}</td><td>{{ row.count }}</td><td>₦{{ row.total|floatformat:2 }}</td></tr>
+    {% empty %}<tr><td colspan="3" class="text-center text-slate-400 py-4">No data.</td></tr>{% endfor %}</tbody></table>
+  </div>
+</div>
+{% endblock %}

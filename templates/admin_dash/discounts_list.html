@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Discount Management{% endblock %}
+{% block content %}
+<div class="flex justify-between items-center mb-4 flex-wrap gap-2">
+  <h1 class="text-xl font-bold">Discount Management</h1>
+  <a href="{% url 'discounts:new' %}" class="btn btn-primary">+ New Rule</a>
+</div>
+
+<div class="card p-4 mb-6">
+  <h2 class="font-bold text-sm mb-3">Engine Strategy &amp; Manual Discount Policy</h2>
+  <form method="post" action="{% url 'discounts:strategy' %}" class="grid sm:grid-cols-3 gap-4 items-end">
+    {% csrf_token %}
+    <div>
+      <label class="block text-xs font-medium text-slate-500 mb-1">Strategy</label>
+      <select name="discount_strategy" class="input">
+        {% for value, label in settings_obj.Strategy.choices %}
+        <option value="{{ value }}" {% if settings_obj.discount_strategy == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="flex items-center gap-2">
+      <input type="checkbox" name="allow_manual_discount" {% if settings_obj.allow_manual_discount %}checked{% endif %}>
+      <label class="text-sm">Allow sales rep manual discount</label>
+    </div>
+    <div>
+      <label class="block text-xs font-medium text-slate-500 mb-1">Max manual discount (%)</label>
+      <input type="number" step="0.01" name="max_manual_discount_percent" value="{{ settings_obj.max_manual_discount_percent }}" class="input">
+    </div>
+    <div class="sm:col-span-3"><button class="btn btn-primary" type="submit">Save Policy</button></div>
+  </form>
+</div>
+
+<div class="card overflow-x-auto">
+<table class="styled-table">
+  <thead><tr><th>Name</th><th>Unit</th><th>Min Qty</th><th>Max Qty</th><th>Rate</th><th>Status</th><th></th></tr></thead>
+  <tbody>
+    {% for r in rules %}
+    <tr>
+      <td class="font-medium">{{ r.name }}</td>
+      <td>{{ r.get_unit_type_display }}</td>
+      <td>{{ r.min_qty }}</td>
+      <td>{{ r.max_qty|default:"∞" }}</td>
+      <td>{% if r.percentage %}{{ r.percentage }}%{% else %}₦{{ r.fixed_amount }}{% endif %}</td>
+      <td>{% if r.active %}<span class="badge badge-green">Active</span>{% else %}<span class="badge badge-slate">Inactive</span>{% endif %}</td>
+      <td class="whitespace-nowrap">
+        <a href="{% url 'discounts:edit' r.pk %}" class="btn btn-outline !py-1 !px-2 text-xs">Edit</a>
+        <a href="{% url 'discounts:toggle' r.pk %}" class="btn btn-outline !py-1 !px-2 text-xs">{% if r.active %}Deactivate{% else %}Activate{% endif %}</a>
+      </td>
+    </tr>
+    {% empty %}<tr><td colspan="7" class="text-center text-slate-400 py-6">No discount rules yet. Discounts are 0% until you create rules here.</td></tr>{% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

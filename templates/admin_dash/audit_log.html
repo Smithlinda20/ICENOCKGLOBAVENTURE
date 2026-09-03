@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Audit Log{% endblock %}
+{% block content %}
+<h1 class="text-xl font-bold mb-4">Audit Log</h1>
+<div class="card overflow-x-auto">
+<table class="styled-table">
+  <thead><tr><th>Time (Lagos)</th><th>User</th><th>Action</th><th>Details</th></tr></thead>
+  <tbody>
+    {% for log in logs %}
+    <tr>
+      <td>{{ log.created_at|date:"d M Y, H:i:s" }}</td>
+      <td>{{ log.user.username|default:"system" }}</td>
+      <td><span class="badge badge-slate">{{ log.action }}</span></td>
+      <td>{{ log.description }}</td>
+    </tr>
+    {% empty %}<tr><td colspan="4" class="text-center text-slate-400 py-6">No activity recorded yet.</td></tr>{% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

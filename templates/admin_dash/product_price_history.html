@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Price History &middot; {{ product.name }}{% endblock %}
+{% block content %}
+<h1 class="text-xl font-bold mb-4">Price History: {{ product.name }}</h1>
+<div class="card overflow-x-auto">
+<table class="styled-table">
+  <thead><tr><th>Date</th><th>Field</th><th>Old Price</th><th>New Price</th><th>Changed By</th></tr></thead>
+  <tbody>
+    {% for h in history %}
+    <tr>
+      <td>{{ h.changed_at|date:"d M Y, H:i" }}</td>
+      <td>{{ h.get_field_changed_display }}</td>
+      <td>{% if h.old_price %}₦{{ h.old_price }}{% else %}—{% endif %}</td>
+      <td class="font-semibold">₦{{ h.new_price }}</td>
+      <td>{{ h.changed_by.username|default:"system" }}</td>
+    </tr>
+    {% empty %}<tr><td colspan="5" class="text-center text-slate-400 py-6">No price changes recorded yet.</td></tr>{% endfor %}
+  </tbody>
+</table>
+</div>
+<a href="{% url 'products:list' %}" class="btn btn-outline mt-4">← Back to Products</a>
+{% endblock %}

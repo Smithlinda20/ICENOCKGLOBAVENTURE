@@ -1,0 +1,139 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<meta name="theme-color" content="#1b7a54">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Ice Nock">
+<meta property="og:title" content="{{ store_settings.company_name }}">
+<meta property="og:description" content="Sales, inventory, discounts, and reporting for Ice Nock Global Venture.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="{% static 'img/icon-512.png' %}">
+<meta property="og:image:alt" content="Ice Nock logo">
+<meta property="og:url" content="{{ request.build_absolute_uri }}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ store_settings.company_name }}">
+<meta name="twitter:description" content="Sales, inventory, discounts, and reporting for Ice Nock Global Venture.">
+<meta name="twitter:image" content="{% static 'img/icon-512.png' %}">
+<link rel="manifest" href="{% static 'manifest.json' %}">
+<link rel="icon" href="{% static 'img/icon-192.png' %}">
+<link rel="shortcut icon" href="{% static 'img/icon-192.png' %}">
+<link rel="apple-touch-icon" href="{% static 'img/apple-touch-icon.png' %}">
+<title>{% block title %}{{ store_settings.company_name }}{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: { sans: ['Inter', 'sans-serif'] },
+        colors: {
+          brand: { 50:'#eff9f4', 100:'#d7f0e2', 200:'#aee1c8', 300:'#7ccca8', 400:'#48b083', 500:'#279467',
+                    600:'#1b7a54', 700:'#186246', 800:'#174e3a', 900:'#144031', DEFAULT:'#1b7a54' },
+          ink: '#0f172a'
+        }
+      }
+    }
+  }
+</script>
+<link rel="stylesheet" href="{% static 'css/app.css' %}">
+{% block extra_head %}{% endblock %}
+</head>
+<body class="bg-slate-50 text-ink font-sans min-h-screen flex flex-col">
+
+{% if user.is_authenticated %}
+<header class="bg-brand text-white shadow no-print">
+  <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between flex-wrap gap-2">
+    <a href="{% if user.is_admin_role %}{% url 'core:dashboard' %}{% else %}{% url 'sales:pos' %}{% endif %}"
+       class="flex items-center gap-2 font-extrabold text-lg tracking-tight">
+      <span class="bg-white text-brand rounded-lg w-8 h-8 flex items-center justify-center">IN</span>
+      {{ store_settings.company_name }}
+    </a>
+    <nav class="flex items-center gap-1 text-sm font-medium flex-wrap">
+      {% if user.is_admin_role %}
+        <a href="{% url 'core:dashboard' %}" class="px-3 py-1.5 rounded-md hover:bg-brand-700">Overview</a>
+        <a href="{% url 'products:list' %}" class="px-3 py-1.5 rounded-md hover:bg-brand-700">Products</a>
+        <a href="{% url 'discounts:list' %}" class="px-3 py-1.5 rounded-md hover:bg-brand-700">Discounts</a>
+        <a href="{% url 'inventory:overview' %}" class="px-3 py-1.5 rounded-md hover:bg-brand-700">Inventory</a>
+        <a href="{% url 'sales:all_sales' %}" class="px-3 py-1.5 rounded-md hover:bg-brand-700">Sales</a>
+        <a href="{% url 'accounts:rep_list' %}" class="px-3 py-1.5 rounded-md hover:bg-brand-700">Reps</a>
+        <a href="{% url 'reports:monthly' %}" class="px-3 py-1.5 rounded-md hover:bg-brand-700">Reports</a>
+        <a href="{% url 'audit:list' %}" class="px-3 py-1.5 rounded-md hover:bg-brand-700">Audit Log</a>
+        <a href="{% url 'core:settings' %}" class="px-3 py-1.5 rounded-md hover:bg-brand-700">Settings</a>
+      {% else %}
+        <a href="{% url 'sales:pos' %}" class="px-3 py-1.5 rounded-md hover:bg-brand-700">New Sale</a>
+        <a href="{% url 'sales:my_sales' %}" class="px-3 py-1.5 rounded-md hover:bg-brand-700">My Sales</a>
+      {% endif %}
+      <span class="px-3 py-1.5 text-brand-100/90">{{ user.get_full_name|default:user.username }}</span>
+      <button id="pwa-install-btn" class="hidden px-3 py-1.5 rounded-md bg-white text-brand font-semibold">📲 Install App</button>
+      <form method="post" action="{% url 'accounts:logout' %}" class="inline">
+        {% csrf_token %}
+        <button type="submit" class="px-3 py-1.5 rounded-md bg-brand-800 hover:bg-brand-900 text-white">Logout</button>
+      </form>
+    </nav>
+  </div>
+</header>
+{% endif %}
+
+<main class="flex-1 max-w-7xl w-full mx-auto px-4 py-6">
+  {% if messages %}
+    <div class="mb-4 space-y-2 no-print">
+      {% for message in messages %}
+        <div class="rounded-lg px-4 py-3 text-sm font-medium
+          {% if message.tags == 'error' %}bg-red-50 text-red-700 border border-red-200
+          {% elif message.tags == 'success' %}bg-emerald-50 text-emerald-700 border border-emerald-200
+          {% else %}bg-slate-100 text-slate-700 border border-slate-200{% endif %}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+  {% block content %}{% endblock %}
+</main>
+
+<footer class="no-print text-center text-xs text-slate-400 py-4">
+  {{ store_settings.company_name }} &middot; {{ store_settings.phone }} &middot; {{ store_settings.email }}
+</footer>
+{% block extra_scripts %}{% endblock %}
+
+<button id="pwa-install-fab" class="hidden no-print fixed bottom-4 right-4 z-50 btn btn-primary shadow-lg">📲 Install App</button>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js').catch(() => {});
+  });
+}
+
+let deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  document.getElementById('pwa-install-btn')?.classList.remove('hidden');
+  document.getElementById('pwa-install-fab')?.classList.remove('hidden');
+});
+
+function triggerInstall() {
+  if (!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  deferredInstallPrompt.userChoice.finally(() => {
+    deferredInstallPrompt = null;
+    document.getElementById('pwa-install-btn')?.classList.add('hidden');
+    document.getElementById('pwa-install-fab')?.classList.add('hidden');
+  });
+}
+document.getElementById('pwa-install-btn')?.addEventListener('click', triggerInstall);
+document.getElementById('pwa-install-fab')?.addEventListener('click', triggerInstall);
+
+window.addEventListener('appinstalled', () => {
+  document.getElementById('pwa-install-btn')?.classList.add('hidden');
+  document.getElementById('pwa-install-fab')?.classList.add('hidden');
+});
+</script>
+</body>
+</html>

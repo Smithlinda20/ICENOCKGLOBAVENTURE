@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Inventory{% endblock %}
+{% block content %}
+<div class="flex justify-between items-center mb-4 flex-wrap gap-2">
+  <h1 class="text-xl font-bold">Inventory</h1>
+  <div class="flex gap-2">
+    <a href="{% url 'inventory:history' %}" class="btn btn-outline">Stock History</a>
+    <a href="{% url 'inventory:adjust' %}" class="btn btn-primary">+ Add / Adjust Stock</a>
+  </div>
+</div>
+
+{% if low_stock %}
+<div class="rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-sm px-4 py-3 mb-4">
+  ⚠ {{ low_stock|length }} product(s) at or below minimum stock level.
+</div>
+{% endif %}
+
+<div class="card overflow-x-auto">
+<table class="styled-table">
+  <thead><tr><th>Product</th><th>Current Stock</th><th>Minimum</th><th>Status</th></tr></thead>
+  <tbody>
+    {% for p in products %}
+    <tr>
+      <td class="font-medium">{{ p.name }}</td>
+      <td>{{ p.current_stock }}</td>
+      <td>{{ p.minimum_stock }}</td>
+      <td>
+        {% if p.is_low_stock %}<span class="badge badge-red">Low Stock</span>
+        {% else %}<span class="badge badge-green">OK</span>{% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

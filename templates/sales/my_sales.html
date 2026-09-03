@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}My Sales{% endblock %}
+{% block content %}
+<h1 class="text-xl font-bold mb-4">My Recent Sales</h1>
+<div class="card overflow-x-auto">
+<table class="styled-table">
+  <thead><tr>
+    <th>Receipt #</th><th>Date</th><th>Customer</th><th>Total</th><th>Payment</th><th>Status</th><th></th>
+  </tr></thead>
+  <tbody>
+    {% for sale in sales %}
+    <tr>
+      <td class="font-medium">{{ sale.receipt_number }}</td>
+      <td>{{ sale.created_at|date:"d M Y, H:i" }}</td>
+      <td>{{ sale.customer_name|default:"—" }}</td>
+      <td class="font-semibold">₦{{ sale.total|floatformat:2 }}</td>
+      <td>{{ sale.get_payment_method_display }}</td>
+      <td>
+        {% if sale.status == "COMPLETED" %}<span class="badge badge-green">Completed</span>
+        {% else %}<span class="badge badge-red">Cancelled</span>{% endif %}
+      </td>
+      <td><a href="{% url 'sales:receipt' sale.pk %}" class="btn btn-outline !py-1 !px-3 text-xs">View Receipt</a></td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="7" class="text-center text-slate-400 py-6">No sales yet. Start your first sale!</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

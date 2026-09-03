@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}{% if instance %}Edit{% else %}Add{% endif %} Product{% endblock %}
+{% block content %}
+<h1 class="text-xl font-bold mb-4">{% if instance %}Edit Product: {{ instance.name }}{% else %}Add Product{% endif %}</h1>
+<div class="card p-6 max-w-2xl">
+<form method="post" enctype="multipart/form-data" class="space-y-4">
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="text-red-600 text-sm">{{ form.non_field_errors }}</div>{% endif %}
+  <div class="grid sm:grid-cols-2 gap-4">
+    <div><label class="block text-sm font-medium mb-1">Name</label>{{ form.name }}</div>
+    <div><label class="block text-sm font-medium mb-1">SKU / Code</label>{{ form.sku }}</div>
+    <div><label class="block text-sm font-medium mb-1">Category</label>{{ form.category }}</div>
+    <div><label class="block text-sm font-medium mb-1">Image</label>{{ form.image }}</div>
+    <div><label class="block text-sm font-medium mb-1">Pack Price (₦)</label>{{ form.pack_price }}</div>
+    <div><label class="block text-sm font-medium mb-1">Carton Price (₦)</label>{{ form.carton_price }}</div>
+    <div><label class="block text-sm font-medium mb-1">Packs per Carton (optional)</label>{{ form.packs_per_carton }}</div>
+    <div><label class="block text-sm font-medium mb-1">Opening / Current Stock</label>{{ form.current_stock }}</div>
+    <div><label class="block text-sm font-medium mb-1">Minimum Stock</label>{{ form.minimum_stock }}</div>
+    <div class="flex items-center gap-2 pt-6">{{ form.active }}<label class="text-sm font-medium">Active</label></div>
+  </div>
+  {% for field in form %}{% if field.errors %}<p class="text-red-600 text-xs">{{ field.label }}: {{ field.errors|join:", " }}</p>{% endif %}{% endfor %}
+  <div class="flex gap-2 pt-2">
+    <button type="submit" class="btn btn-primary">Save Product</button>
+    <a href="{% url 'products:list' %}" class="btn btn-outline">Cancel</a>
+  </div>
+</form>
+</div>
+{% endblock %}

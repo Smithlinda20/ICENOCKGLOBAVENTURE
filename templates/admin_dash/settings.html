@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% block content %}
+<h1 class="text-xl font-bold mb-4">System Settings</h1>
+<div class="card p-6 max-w-xl">
+<form method="post" class="space-y-4">
+  {% csrf_token %}
+  <div><label class="block text-sm font-medium mb-1">Company Name</label><input type="text" name="company_name" value="{{ settings_obj.company_name }}" class="input"></div>
+  <div><label class="block text-sm font-medium mb-1">Store Address</label><input type="text" name="address" value="{{ settings_obj.address }}" class="input"></div>
+  <div class="grid sm:grid-cols-2 gap-4">
+    <div><label class="block text-sm font-medium mb-1">Phone</label><input type="text" name="phone" value="{{ settings_obj.phone }}" class="input"></div>
+    <div><label class="block text-sm font-medium mb-1">Email</label><input type="email" name="email" value="{{ settings_obj.email }}" class="input"></div>
+  </div>
+  <div><label class="block text-sm font-medium mb-1">Receipt Footer</label><input type="text" name="receipt_footer" value="{{ settings_obj.receipt_footer }}" class="input"></div>
+  <div class="grid sm:grid-cols-3 gap-4">
+    <div><label class="block text-sm font-medium mb-1">Currency Code</label><input type="text" name="currency_code" value="{{ settings_obj.currency_code }}" class="input"></div>
+    <div><label class="block text-sm font-medium mb-1">Currency Symbol</label><input type="text" name="currency_symbol" value="{{ settings_obj.currency_symbol }}" class="input"></div>
+    <div><label class="block text-sm font-medium mb-1">Thermal Width</label>
+      <select name="thermal_receipt_width_mm" class="input">
+        <option value="58" {% if settings_obj.thermal_receipt_width_mm == 58 %}selected{% endif %}>58mm</option>
+        <option value="80" {% if settings_obj.thermal_receipt_width_mm == 80 %}selected{% endif %}>80mm</option>
+      </select>
+    </div>
+  </div>
+  <div><label class="block text-sm font-medium mb-1">Default Low Stock Threshold</label><input type="number" name="low_stock_threshold_default" value="{{ settings_obj.low_stock_threshold_default }}" class="input"></div>
+  <p class="text-xs text-slate-500">Timezone is fixed to Africa/Lagos. Discount policy is managed on the Discounts page.</p>
+  <button type="submit" class="btn btn-primary">Save Settings</button>
+</form>
+</div>
+{% endblock %}

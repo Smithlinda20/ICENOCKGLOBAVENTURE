@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}All Sales{% endblock %}
+{% block content %}
+<h1 class="text-xl font-bold mb-4">All Sales</h1>
+<form method="get" class="card p-4 mb-4 grid sm:grid-cols-4 gap-3 text-sm">
+  <input type="text" name="receipt" value="{{ filters.receipt }}" placeholder="Receipt #" class="input">
+  <input type="text" name="product" value="{{ filters.product }}" placeholder="Product" class="input">
+  <select name="salesperson" class="input">
+    <option value="">All Reps</option>
+    {% for r in reps %}<option value="{{ r.id }}" {% if filters.salesperson == r.id|stringformat:"s" %}selected{% endif %}>{{ r.username }}</option>{% endfor %}
+  </select>
+  <select name="unit_type" class="input">
+    <option value="">Any Unit</option>
+    <option value="PACK" {% if filters.unit_type == "PACK" %}selected{% endif %}>Pack</option>
+    <option value="CARTON" {% if filters.unit_type == "CARTON" %}selected{% endif %}>Carton</option>
+  </select>
+  <select name="payment_method" class="input">
+    <option value="">Any Payment</option>
+    <option value="CASH" {% if filters.payment_method == "CASH" %}selected{% endif %}>Cash</option>
+    <option value="TRANSFER" {% if filters.payment_method == "TRANSFER" %}selected{% endif %}>Bank Transfer</option>
+    <option value="POS" {% if filters.payment_method == "POS" %}selected{% endif %}>POS</option>
+    <option value="OTHER" {% if filters.payment_method == "OTHER" %}selected{% endif %}>Other</option>
+  </select>
+  <input type="text" name="phone" value="{{ filters.phone }}" placeholder="Customer phone" class="input">
+  <input type="date" name="date_from" value="{{ filters.date_from }}" class="input">
+  <input type="date" name="date_to" value="{{ filters.date_to }}" class="input">
+  <button class="btn btn-primary">Filter</button>
+</form>
+
+<div class="card overflow-x-auto">
+<table class="styled-table">
+  <thead><tr><th>Receipt</th><th>Date</th><th>Rep</th><th>Customer</th><th>Total</th><th>Payment</th><th>Status</th><th></th></tr></thead>
+  <tbody>
+    {% for s in sales %}
+    <tr>
+      <td class="font-medium">{{ s.receipt_number }}</td>
+      <td>{{ s.created_at|date:"d M Y, H:i" }}</td>
+      <td>{{ s.salesperson.username }}</td>
+      <td>{{ s.customer_name|default:"—" }}</td>
+      <td class="font-semibold">₦{{ s.total|floatformat:2 }}</td>
+      <td>{{ s.get_payment_method_display }}</td>
+      <td>{% if s.status == "COMPLETED" %}<span class="badge badge-green">Completed</span>{% else %}<span class="badge badge-red">Cancelled</span>{% endif %}</td>
+      <td class="whitespace-nowrap">
+        <a href="{% url 'sales:receipt' s.pk %}" class="btn btn-outline !py-1 !px-2 text-xs">View</a>
+        {% if s.status == "COMPLETED" %}<a href="{% url 'sales:sale_cancel' s.pk %}" class="btn btn-danger !py-1 !px-2 text-xs">Cancel</a>{% endif %}
+      </td>
+    </tr>
+    {% empty %}<tr><td colspan="8" class="text-center text-slate-400 py-6">No sales found.</td></tr>{% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

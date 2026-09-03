@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Stock History{% endblock %}
+{% block content %}
+<h1 class="text-xl font-bold mb-4">Stock Movement History</h1>
+<form method="get" class="mb-4">
+  <select name="product" class="input max-w-xs" onchange="this.form.submit()">
+    <option value="">All Products</option>
+    {% for p in products %}<option value="{{ p.id }}" {% if selected == p.id|stringformat:"s" %}selected{% endif %}>{{ p.name }}</option>{% endfor %}
+  </select>
+</form>
+<div class="card overflow-x-auto">
+<table class="styled-table">
+  <thead><tr><th>Date</th><th>Product</th><th>Type</th><th>Qty</th><th>Resulting Stock</th><th>Reason</th><th>User</th></tr></thead>
+  <tbody>
+    {% for m in movements %}
+    <tr>
+      <td>{{ m.created_at|date:"d M Y, H:i" }}</td>
+      <td>{{ m.product.name }}</td>
+      <td>{{ m.get_movement_type_display }}</td>
+      <td class="{% if m.quantity < 0 %}text-red-600{% else %}text-emerald-600{% endif %} font-semibold">{{ m.quantity }}</td>
+      <td>{{ m.resulting_stock }}</td>
+      <td>{{ m.reason|default:"—" }}</td>
+      <td>{{ m.user.username|default:"system" }}</td>
+    </tr>
+    {% empty %}<tr><td colspan="7" class="text-center text-slate-400 py-6">No stock movements yet.</td></tr>{% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

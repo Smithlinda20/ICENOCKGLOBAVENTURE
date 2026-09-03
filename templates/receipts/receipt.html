@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Receipt {{ sale.receipt_number }}{% endblock %}
+{% block content %}
+<div x-data="{ width: '{{ settings_obj.thermal_receipt_width_mm }}mm' }" class="max-w-md mx-auto">
+
+  <div class="no-print flex flex-wrap gap-2 justify-center mb-4">
+    <button onclick="window.print()" class="btn btn-primary">🖨️ Print</button>
+    <a href="{% url 'sales:receipt_pdf' sale.pk %}" class="btn btn-secondary">⬇ Download PDF</a>
+    {% if whatsapp_url %}
+    <a href="{{ whatsapp_url }}" target="_blank" rel="noopener" class="btn" style="background:#25D366;color:#fff;">💬 Send via WhatsApp</a>
+    {% endif %}
+    <button type="button" class="btn btn-outline" onclick="copyReceiptText()">📋 Copy Message</button>
+    <a href="{% url 'sales:receipt_reprint' sale.pk %}" class="btn btn-outline">↺ Log Reprint</a>
+    <a href="{% if user.is_admin_role %}{% url 'sales:all_sales' %}{% else %}{% url 'sales:my_sales' %}{% endif %}" class="btn btn-outline">← Back</a>
+  </div>
+
+  <div class="no-print flex justify-center gap-2 mb-4 text-xs">
+    <span class="text-slate-500">Paper width:</span>
+    <button class="underline" onclick="document.getElementById('receipt-box').className='receipt-paper receipt-58mm border border-dashed border-slate-300'">58mm</button>
+    <button class="underline" onclick="document.getElementById('receipt-box').className='receipt-paper receipt-80mm border border-dashed border-slate-300'">80mm</button>
+  </div>
+
+  <div id="receipt-box" class="receipt-paper receipt-{{ settings_obj.thermal_receipt_width_mm }}mm border border-dashed border-slate-300 rounded-md shadow-sm">
+    <div class="center bold" style="font-size:14px;">{{ store_settings.company_name }}</div>
+    <div class="center">{{ store_settings.address }}</div>
+    <div class="center">{{ store_settings.phone }}</div>
+    <div class="center">{{ store_settings.email }}</div>
+    <hr>
+    <div>Receipt: <span class="bold">{{ sale.receipt_number }}</span></div>
+    <div>Date: {{ sale.created_at|date:"d M Y, H:i" }} (Lagos)</div>
+    <div>Sold by: {{ sale.salesperson.get_full_name|default:sale.salesperson.username }}</div>
+    {% if sale.customer_name %}<div>Customer: {{ sale.customer_name }}</div>{% endif %}
+    {% if sale.customer_phone %}<div>Phone: {{ sale.customer_phone }}</div>{% endif %}
+    {% if whatsapp_url %}<div>WhatsApp: <a href="{{ whatsapp_url }}" target="_blank" rel="noopener">wa.me/{{ whatsapp_number }}</a></div>{% endif %}
+    <hr>
+    {% for item in sale.items.all %}
+      <div class="bold">{{ item.product.name }}</div>
+      <div class="row"><span>{{ item.quantity }} {{ item.unit_type }} x ₦{{ item.unit_price }}</span><span>₦{{ item.gross_amount }}</span></div>
+      {% if item.discount_amount %}<div class="row"><span>Discount</span><span>-₦{{ item.discount_amount }}</span></div>{% endif %}
+      <div class="row bold"><span>Net</span><span>₦{{ item.net_amount }}</span></div>
+    {% endfor %}
+    <hr>
+    <div class="row"><span>Subtotal</span><span>₦{{ sale.subtotal }}</span></div>
+    {% if sale.discount_total %}<div class="row"><span>Item Discount</span><span>-₦{{ sale.discount_total }}</span></div>{% endif %}
+    {% if sale.manual_discount_amount %}<div class="row"><span>Extra Discount{% if sale.manual_discount_reason %} ({{ sale.manual_discount_reason }}){% endif %}</span><span>-₦{{ sale.manual_discount_amount }}</span></div>{% endif %}
+    <div class="row bold" style="font-size:13px;"><span>TOTAL</span><span>₦{{ sale.total }}</span></div>
+    <div class="row"><span>Payment</span><span>{{ sale.get_payment_method_display }}</span></div>
+    <div class="row"><span>Amount Paid</span><span>₦{{ sale.amount_paid }}</span></div>
+    {% if sale.balance != 0 %}
+    <div class="row"><span>{% if sale.balance >= 0 %}Change{% else %}Balance Due{% endif %}</span><span>₦{{ sale.balance|floatformat:2 }}</span></div>
+    {% endif %}
+    <hr>
+    <div class="center">{{ store_settings.receipt_footer }}</div>
+    {% if sale.reprint_count %}<div class="center" style="font-size:9px;">(Reprinted {{ sale.reprint_count }}x)</div>{% endif %}
+  </div>
+</div>
+
+<textarea id="raw-message" class="hidden">{{ raw_message }}</textarea>
+<script>
+function copyReceiptText() {
+  const text = document.getElementById('raw-message').value;
+  navigator.clipboard.writeText(text).then(() => alert('Receipt message copied.'));
+}
+</script>
+{% endblock %}

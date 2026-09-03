@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Products{% endblock %}
+{% block content %}
+<div class="flex justify-between items-center mb-4 flex-wrap gap-2">
+  <h1 class="text-xl font-bold">Products</h1>
+  <a href="{% url 'products:new' %}" class="btn btn-primary">+ Add Product</a>
+</div>
+<form method="get" class="mb-4">
+  <input type="text" name="q" value="{{ q }}" placeholder="Search by name, SKU or category" class="input max-w-sm">
+</form>
+<div class="card overflow-x-auto">
+<table class="styled-table">
+  <thead><tr><th>Product</th><th>SKU</th><th>Category</th><th>Pack ₦</th><th>Carton ₦</th><th>Stock</th><th>Status</th><th></th></tr></thead>
+  <tbody>
+    {% for p in products %}
+    <tr>
+      <td class="font-medium">{{ p.name }}</td>
+      <td>{{ p.sku }}</td>
+      <td>{{ p.category|default:"—" }}</td>
+      <td>₦{{ p.pack_price }}</td>
+      <td>₦{{ p.carton_price }}</td>
+      <td class="{% if p.is_low_stock %}text-red-600 font-semibold{% endif %}">{{ p.current_stock }}</td>
+      <td>
+        {% if p.active %}<span class="badge badge-green">Active</span>{% else %}<span class="badge badge-slate">Inactive</span>{% endif %}
+        {% if p.is_low_stock %}<span class="badge badge-amber">Low Stock</span>{% endif %}
+      </td>
+      <td class="whitespace-nowrap">
+        <a href="{% url 'products:edit' p.pk %}" class="btn btn-outline !py-1 !px-2 text-xs">Edit</a>
+        <a href="{% url 'products:price_history' p.pk %}" class="btn btn-outline !py-1 !px-2 text-xs">Prices</a>
+        <a href="{% url 'products:toggle' p.pk %}" class="btn btn-outline !py-1 !px-2 text-xs">{% if p.active %}Deactivate{% else %}Activate{% endif %}</a>
+      </td>
+    </tr>
+    {% empty %}<tr><td colspan="8" class="text-center text-slate-400 py-6">No products yet.</td></tr>{% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}
